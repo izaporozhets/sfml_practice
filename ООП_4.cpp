@@ -4,7 +4,7 @@
 #include "pch.h"
 #include <iostream>
 #include <vector>
-#include <algorithm>
+//#include <algorithm>
 
 #include "Functions.h"
 #include "Rectangle.h"
@@ -17,6 +17,9 @@
 #include "MementoServ.h"
 
 void select_shape(std::vector<sf::Shape*>& v_shapes, sf::RenderWindow& window, sf::Shape*& current_composite, sf::Shape*& current_shape);
+void deformation_for_shape(sf::Shape* current_shape, std::vector<sf::Shape*> v_shapes);
+void deformation_for_container(sf::Shape* current_composite, std::vector<sf::Shape*> v_shapes);
+
 int main()
 {
 	//Single scene
@@ -206,79 +209,19 @@ int main()
 			}
 		}
 
-
-
-
+		//Deformation and moving
 		if (current_shape) {
 			moving(current_shape);
+			deformation_for_shape(current_shape, v_shapes);
 		}
 		if (current_composite) {
 			dynamic_cast<Composite*>(current_composite)->moving_together();
+			deformation_for_container(current_composite, v_shapes);
 		}
 		container.moving_together();
 
 		if (!is_tail) {
 			window->getWindow()->clear();
-		}
-
-		//Deformation
-		if (current_shape) {
-			bool is_container = false;
-			for (auto& elem : v_shapes) {
-				if (dynamic_cast<Composite*>(elem)) {
-					is_container = true;
-					for (auto& shape : *dynamic_cast<Composite*>(elem)->get_shapes()) {
-						if (current_shape->getGlobalBounds().intersects(shape->getGlobalBounds())) {
-							current_shape->setScale(sf::Vector2f(1.3, 1.3));
-							break;
-						}
-						else {
-							current_shape->setScale(sf::Vector2f(1, 1));
-						}
-					}
-					continue;
-				}
-				else if (current_shape->getGlobalBounds().intersects(elem->getGlobalBounds()) && current_shape != elem) {
-					current_shape->setScale(sf::Vector2f(1.3, 1.3));
-					break;
-				}
-				else if(is_container == false) {
-					current_shape->setScale(sf::Vector2f(1, 1));
-				}
-			}
-		}
-		if (current_composite) {
-			for (auto& container : v_shapes) {
-
-				if (dynamic_cast<Composite*>(container) && dynamic_cast<Composite*>(current_composite) != dynamic_cast<Composite*>(container)) {
-					for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-						shape2->setScale(sf::Vector2f(1, 1));
-					}
-					for (auto& shape : *dynamic_cast<Composite*>(container)->get_shapes()) {
-
-						for (auto& shape1 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-
-							if (shape->getGlobalBounds().intersects(shape1->getGlobalBounds())) {
-								for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-									shape2->setScale(sf::Vector2f(1.3, 1.3));
-								}
-							}
-						}
-					}
-				}
-				else if (dynamic_cast<Composite*>(current_composite) != dynamic_cast<Composite*>(container)){
-					for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-						shape2->setScale(sf::Vector2f(1, 1));
-					}
-					for (auto& shape1 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-						if (shape1->getGlobalBounds().intersects(container->getGlobalBounds())) {
-							for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
-								shape2->setScale(sf::Vector2f(1.3, 1.3));
-							}
-						}
-					}
-				}
-			}
 		}
 		
 		//Window bounds
@@ -327,7 +270,65 @@ int main()
 	return 0;
 }
 
+void deformation_for_shape(sf::Shape* current_shape,std::vector<sf::Shape*> v_shapes) {
+	bool is_container = false;
+	for (auto& elem : v_shapes) {
+		if (dynamic_cast<Composite*>(elem)) {
+			is_container = true;
+			for (auto& shape : *dynamic_cast<Composite*>(elem)->get_shapes()) {
+				if (current_shape->getGlobalBounds().intersects(shape->getGlobalBounds())) {
+					current_shape->setScale(sf::Vector2f(1.3, 1.3));
+					return;
+				}
+				else {
+					current_shape->setScale(sf::Vector2f(1, 1));
+				}
+			}
+			continue;
+		}
+		else if (current_shape->getGlobalBounds().intersects(elem->getGlobalBounds()) && current_shape != elem) {
+			current_shape->setScale(sf::Vector2f(1.3, 1.3));
+			break;
+		}
+		else if (is_container == false) {
+			current_shape->setScale(sf::Vector2f(1, 1));
+		}
+	}
+}
+void deformation_for_container(sf::Shape* current_composite, std::vector<sf::Shape*> v_shapes) {
+	for (auto& container : v_shapes) {
 
+		if (dynamic_cast<Composite*>(container) && dynamic_cast<Composite*>(current_composite) != dynamic_cast<Composite*>(container)) {
+			for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+				shape2->setScale(sf::Vector2f(1, 1));
+			}
+			for (auto& shape : *dynamic_cast<Composite*>(container)->get_shapes()) {
+
+				for (auto& shape1 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+
+					if (shape->getGlobalBounds().intersects(shape1->getGlobalBounds())) {
+						for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+							shape2->setScale(sf::Vector2f(1.3, 1.3));
+						}
+					}
+				}
+			}
+		}
+		else if (dynamic_cast<Composite*>(current_composite) != dynamic_cast<Composite*>(container)) {
+			for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+				shape2->setScale(sf::Vector2f(1, 1));
+			}
+			for (auto& shape1 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+				if (shape1->getGlobalBounds().intersects(container->getGlobalBounds())) {
+					for (auto& shape2 : *dynamic_cast<Composite*>(current_composite)->get_shapes()) {
+						shape2->setScale(sf::Vector2f(1.3, 1.3));
+					}
+					return;
+				}
+			}
+		}
+	}
+}
 void select_shape(std::vector<sf::Shape*>& v_shapes, sf::RenderWindow& window, sf::Shape*& current_composite, sf::Shape*& current_shape) {
 	sf::Vector2f mouse_position;
 	mouse_position.x = sf::Mouse::getPosition(window).x;
